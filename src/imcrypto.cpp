@@ -175,4 +175,69 @@ std::string decryptText(cv::Mat img, uint32_t key)
 
     return data;
 }
+
+
+//------
+
+
+cv::Vec3b base_callback::CH2RGB323(cv::Vec3b colorOfPixel, uchar ch)
+{
+    colorOfPixel[0] = colorOfPixel[0] & 0b11111000; //BLUE
+    colorOfPixel[1] = colorOfPixel[1] & 0b11111100; //GREEN
+    colorOfPixel[2] = colorOfPixel[2] & 0b11111000; //RED
+
+    colorOfPixel[2] += (ch & 0b11100000) >> 5; // RED
+    colorOfPixel[1] += (ch & 0b00011000) >> 3; // GREEN
+    colorOfPixel[0] += (ch & 0b00000111);      // BLUE
+
+    return colorOfPixel;
+}
+
+Cryptor::Cryptor(const int32_t& seed, insert_callback callback)
+{
+    _seed = seed; 
+    _callback = callback;
+}
+
+void Cryptor::setSeed(const int32_t& seed) 
+{
+    _seed = seed;
+}
+
+void Cryptor::setInsertCallback(insert_callback callback)
+{
+    _callback = callback;
+}
+
+cv::Mat Cryptor::crypt(cv::Mat sourceMat, const char* buf, const uint32_t size)
+{
+    cv::Mat new_img = sourceMat;
+
+    if (size >= new_img.size().width * new_img.size().height) {
+        std::cerr << "Input file more high\n";
+        abort();
+    }
+
+    std::vector<int> rnd_used;
+    srand(_seed);
+
+    for (int i = 0; i < size+1; i++)
+    {
+        int pixel_index = 0;
+
+        do {
+            pixel_index = rand() % (new_img.size().width * new_img.size().height + 1);
+        } while (std::find(rnd_used.begin(), rnd_used.end(), pixel_index) != rnd_used.end());
+
+        rnd_used.push_back(pixel_index);
+        new_img.at<cv::Vec3b>(pixel_index) = insetInColor(new_img.at<cv::Vec3b>(pixel_index), (uchar)buf[i]);
+
+        if (i == size) {
+            insetInColor(new_img.at<cv::Vec3b>(pixel_index), 0x0);
+        }
+    }
+
+    return new_img;
+}
+
 #endif //_IMCRYPTO_CPP_
