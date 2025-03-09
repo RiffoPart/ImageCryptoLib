@@ -3,14 +3,6 @@
 
 #include "../include/imcpyto.hpp"
 
-uchar getChFromColor(cv::Vec3b color) 
-{
-    uchar ch = 0;
-    ch = ((color[2] & 0b00000111) << 5) + ((color[1] & 0b00000011) << 3) + (color[0] & 0b00000111);
-
-    return ch;
-}
-
 std::ostream& operator<<(std::ostream& cout, const cv::Vec3b& color) 
 {
     return cout << "RGB(" << (int)color[2] << " " << (int)color[1] << " " << (int)color[0] << ")";
@@ -26,11 +18,19 @@ int32_t getSeed(const std::string& string_key)
     return vkey;
 }
 
-
-//------
 uchar base_callback::unpack::RGB323_2CH(cv::Vec3b colorOfPixel)
 {
     return ((colorOfPixel[2] & 0b00000111) << 5) + ((colorOfPixel[1] & 0b00000011) << 3) + (colorOfPixel[0] & 0b00000111);
+}
+
+uchar base_callback::unpack::RGB332_2CH(cv::Vec3b colorOfPixel)
+{
+    return ((colorOfPixel[2] & 0b00000111) << 5) + ((colorOfPixel[1] & 0b00000111) << 2) + (colorOfPixel[0] & 0b00000011);
+}
+
+uchar base_callback::unpack::RGB233_2CH(cv::Vec3b colorOfPixel)
+{
+    return ((colorOfPixel[2] & 0b00000011) << 6) + ((colorOfPixel[1] & 0b00000111) << 3) + (colorOfPixel[0] & 0b00000111);
 }
 
 cv::Vec3b base_callback::pack::CH2RGB323(cv::Vec3b colorOfPixel, uchar ch)
@@ -46,8 +46,32 @@ cv::Vec3b base_callback::pack::CH2RGB323(cv::Vec3b colorOfPixel, uchar ch)
     return colorOfPixel;
 }
 
+cv::Vec3b base_callback::pack::CH2RGB332(cv::Vec3b colorOfPixel, uchar ch)
+{
+    colorOfPixel[0] = colorOfPixel[0] & 0b11111100; //BLUE
+    colorOfPixel[1] = colorOfPixel[1] & 0b11111000; //GREEN
+    colorOfPixel[2] = colorOfPixel[2] & 0b11111000; //RED
 
-//-----
+    colorOfPixel[2] += (ch & 0b11100000) >> 5; // RED
+    colorOfPixel[1] += (ch & 0b00011100) >> 2; // GREEN
+    colorOfPixel[0] += (ch & 0b00000011);      // BLUE
+
+    return colorOfPixel;
+}
+
+cv::Vec3b base_callback::pack::CH2RGB233(cv::Vec3b colorOfPixel, uchar ch)
+{
+    colorOfPixel[0] = colorOfPixel[0] & 0b11111000; //BLUE
+    colorOfPixel[1] = colorOfPixel[1] & 0b11111000; //GREEN
+    colorOfPixel[2] = colorOfPixel[2] & 0b11111100; //RED
+
+    colorOfPixel[2] += (ch & 0b11000000) >> 6; // RED
+    colorOfPixel[1] += (ch & 0b00111000) >> 3; // GREEN
+    colorOfPixel[0] += (ch & 0b00000111);      // BLUE
+
+    return colorOfPixel;
+}
+
 Cryptor::Cryptor(const int32_t& seed, insert_callback callback)
 {
     _seed = seed; 

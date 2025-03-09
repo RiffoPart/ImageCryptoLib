@@ -1,34 +1,30 @@
 #ifndef _IMCRYPTO_HPP_
 #define _IMCRYPTO_HPP_
 
-
 #include <stdint.h>
 #include <opencv2/opencv.hpp>
 #include <ostream>
 #include <fstream>
 #include <functional>
 
-cv::Vec3b insetInColor(cv::Vec3b color, uchar ch);
-uchar getChFromColor(cv::Vec3b color);
-
 std::ostream& operator<<(std::ostream& cout, const cv::Vec3b& color);
 
 int32_t getSeed(const std::string& string_key);
 
-
 using insert_callback = std::function<cv::Vec3b(cv::Vec3b, uchar)>;
 using unpack_callback = std::function<uchar(cv::Vec3b)>;
+
 namespace base_callback {
     namespace pack {
         cv::Vec3b CH2RGB323(cv::Vec3b colorOfPixel, uchar ch);
-        // cv::Vec3b CH2RGB332(cv::Vec3b colorOfPixel, uchar ch);
-        // cv::Vec3b CH2RGB233(cv::Vec3b colorOfPixel, uchar ch);
+        cv::Vec3b CH2RGB332(cv::Vec3b colorOfPixel, uchar ch);
+        cv::Vec3b CH2RGB233(cv::Vec3b colorOfPixel, uchar ch);
     };
 
     namespace unpack {
         uchar RGB323_2CH(cv::Vec3b colorOfPixel);
-        // uchar RGB332_2CH(cv::Vec3b colorOfPixel);
-        // uchar RGB233_2CH(cv::Vec3b colorOfPixel);
+        uchar RGB332_2CH(cv::Vec3b colorOfPixel);
+        uchar RGB233_2CH(cv::Vec3b colorOfPixel);
     }
 };
 
@@ -65,7 +61,6 @@ public:
     void setInsertCallback(unpack_callback callback);
 
     std::string encrypt(cv::Mat sourceMat);
-
 };
 
 #endif //_IMCRYPTO_HPP_
